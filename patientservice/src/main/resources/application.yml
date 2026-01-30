@@ -1,0 +1,26 @@
+#spring.application.name=patientservice
+
+# Can be used when we want to use IN Memory Database for our application
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#  datasource:
+#    url: jdbc:h2:mem:testdb
+#    driver-class-name: org.h2.Driver
+#    username: admin
+#    password: password
+#  jpa:
+#    database-platform: org.hibernate.dialect.H2Dialect
+#    hibernate:
+#      ddl-auto: update
+#  sql:
+#    init:
+#      mode: always
+
+spring:
+  application:
+    name: patient-service
+
+server:
+  port: 8080
