@@ -16,6 +16,25 @@ public class Patient {
     @NotNull
     private String name;
 
+    @NotNull
+    @Email
+    @Column(unique = true)
+    private String email;
+
+    @NotNull
+    private String address;
+
+    @Column(name = "date_of_birth", nullable = false)
+    private LocalDate dateofBirth;
+
+    @Column(name = "registered_date", nullable = false)
+    private LocalDate registeredDate;
+
+    @Column(name = "doctor_email")
+    private String doctorEmail;
+
+    // Getters and Setters
+
     public UUID getId() {
         return id;
     }
@@ -64,17 +83,11 @@ public class Patient {
         this.registeredDate = registeredDate;
     }
 
-    @NotNull
-    @Email
-    @Column(unique = true)
-    private String email;
+    public String getDoctorEmail() {
+        return doctorEmail;
+    }
 
-    @NotNull
-    private String address;
-
-    @Column(name = "date_of_birth", nullable = false)
-    private LocalDate dateofBirth;
-
-    @Column(name = "registered_date", nullable = false)
-    private LocalDate registeredDate;
+    public void setDoctorEmail(String doctorEmail) {
+        this.doctorEmail = doctorEmail;
+    }
 }

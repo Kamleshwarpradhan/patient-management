@@ -6,7 +6,20 @@
       <list>
         <option value="$PROJECT_DIR$/patientservice/pom.xml" />
         <option value="$PROJECT_DIR$/billingservice/pom.xml" />
+        <option value="$PROJECT_DIR$/analyticsservice/pom.xml" />
+        <option value="$PROJECT_DIR$/apigateway/pom.xml" />
+        <option value="$PROJECT_DIR$/authService/pom.xml" />
+        <option value="$PROJECT_DIR$/integration-tests/pom.xml" />
+        <option value="$PROJECT_DIR$/Integration-test/pom.xml" />
+        <option value="$PROJECT_DIR$/infrastructure/pom.xml" />
+        <option value="$PROJECT_DIR$/appointmentService/pom.xml" />
+        <option value="$PROJECT_DIR$/notificationService/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/integration-tests/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_23" project-jdk-name="openjdk-24" project-jdk-type="JavaSDK">

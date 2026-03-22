@@ -1,0 +1,15 @@
+#spring.application.name=analyticsservice
+#server.port = 8082
+
+spring:
+  application:
+    name: 8082
+  kafka:
+    consumer:
+      group-id: analytics-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+server:
+  port: 8082

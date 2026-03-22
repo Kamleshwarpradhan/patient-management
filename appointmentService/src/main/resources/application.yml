@@ -1,0 +1,13 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: appointmentService
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+auth-service:
+  url: http://auth-service:8083

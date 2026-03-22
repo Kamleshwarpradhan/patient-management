@@ -1,0 +1,22 @@
+#spring.application.name=notificationService
+
+server:
+  port: 8085
+
+spring:
+  application:
+    name: notificationService
+  kafka:
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  mail:
+    host: smtp.gmail.com         # Or any SMTP server
+    port: 587
+    username: your-email@gmail.com    # ? REPLACE
+    password: your-app-password       # ? REPLACE (use App Password)
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true

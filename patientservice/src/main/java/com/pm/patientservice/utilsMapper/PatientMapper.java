@@ -7,7 +7,7 @@ import com.pm.patientservice.model.Patient;
 import java.time.LocalDate;
 
 public class PatientMapper {
-    public static PatientResponseDTO mapPatienttoPatientResponseDTO(Patient patient){
+    public static PatientResponseDTO mapPatienttoPatientResponseDTO(Patient patient) {
 
         PatientResponseDTO patientResponseDTO = new PatientResponseDTO();
 
@@ -16,11 +16,12 @@ public class PatientMapper {
         patientResponseDTO.setAddress(patient.getAddress());
         patientResponseDTO.setEmail(patient.getEmail());
         patientResponseDTO.setDateOfBirth(patient.getDateofBirth().toString());
+        patientResponseDTO.setDoctorEmail(patient.getDoctorEmail());
 
         return patientResponseDTO;
     }
 
-    public static Patient mapPatientRequestDTOtoPatient(PatientRequestDTO patientRequestDTO){
+    public static Patient mapPatientRequestDTOtoPatient(PatientRequestDTO patientRequestDTO) {
         Patient patient = new Patient();
 
         patient.setName(patientRequestDTO.getName());

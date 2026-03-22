@@ -1,0 +1,38 @@
+#spring.application.name=apigateway
+server:
+  port: 8088 # Gateway listens on port 8088
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service-route
+              uri: http://host.docker.internal:8083
+              predicates:
+                - Path=/auth/**
+              filters:
+                - StripPrefix=1
+
+            - id: patient-service-route
+              uri: http://host.docker.internal:8080
+              predicates:
+                - Path=/api/patient/**
+              filters:
+                - StripPrefix=1
+                - JwtValidation
+
+            - id: api-docs-patient-route
+              uri: http://host.docker.internal:8080
+              predicates:
+                - Path=/api-docs/patient
+              filters:
+                - RewritePath=/api-docs/patient,/v3/api-docs
+
+            - id: api-docs-auth-route
+              uri: http://host.docker.internal:8083
+              predicates:
+                - Path=/api-docs/auth
+              filters:
+                - RewritePath=/api-docs/auth,/v3/api-docs
