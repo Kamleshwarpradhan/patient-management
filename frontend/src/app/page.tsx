@@ -92,7 +92,7 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700">
             <Zap className="h-3.5 w-3.5" />
-            Simplify your clinical workflow
+            Connecting Patients & Doctors Instantly
           </div>
 
           <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
@@ -101,13 +101,12 @@ export default function LandingPage() {
             </span>
             <br />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Medical Practice
+              Healthcare Experience
             </span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 leading-relaxed md:text-xl">
-            The all-in-one platform for managing patients, scheduling appointments,
-            and tracking analytics — so you can focus on what matters most: your patients.
+            The all-in-one platform bridging the gap in healthcare. Patients can book appointments instantly, while doctors manage their practice and analytics effortlessly.
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -149,13 +148,13 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Everything you need to{" "}
+              Everything you need for a{" "}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                manage your clinic
+                modern healthcare journey
               </span>
             </h2>
             <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
-              Powerful tools designed specifically for healthcare professionals
+              Powerful tools designed specifically for both patients and healthcare professionals
             </p>
           </div>
 
@@ -232,21 +231,21 @@ export default function LandingPage() {
                 step: "01",
                 icon: UserPlus,
                 title: "Create Your Account",
-                desc: "Sign up with your email and start your free trial. No credit card required.",
+                desc: "Sign up as a Patient to book your next visit, or as a Doctor to manage your practice.",
                 color: "from-blue-500 to-indigo-500",
               },
               {
                 step: "02",
                 icon: ClipboardList,
-                title: "Add Your Patients",
-                desc: "Import or manually add patient records with our intuitive interface.",
+                title: "Connect Instantly",
+                desc: "Patients can browse specialties and book appointments directly. Doctors receive real-time notifications.",
                 color: "from-indigo-500 to-purple-500",
               },
               {
                 step: "03",
                 icon: TrendingUp,
-                title: "Track & Grow",
-                desc: "Monitor analytics, manage appointments, and grow your practice effortlessly.",
+                title: "Track & Manage",
+                desc: "Patients get a dedicated dashboard for their history. Doctors can track analytics and organize their clinics effortlessly.",
                 color: "from-purple-500 to-pink-500",
               },
             ].map((item) => (

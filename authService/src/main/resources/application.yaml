@@ -1,0 +1,13 @@
+#spring.application.name=authService
+#server.port = 8083
+
+spring:
+  application:
+    name: authService
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  port: 8083

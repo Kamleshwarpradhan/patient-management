@@ -2,6 +2,7 @@ package com.pm.authService.service;
 
 import com.pm.authService.dto.LoginRequestDTO;
 import com.pm.authService.dto.SignupRequestDTO;
+import com.pm.authService.kafka.UserRegisteredProducer;
 import com.pm.authService.model.Role;
 import com.pm.authService.model.User;
 import com.pm.authService.utils.JwtUtil;
@@ -16,15 +17,18 @@ public class AuthService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserRegisteredProducer userRegisteredProducer;
 
-    public AuthService(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthService(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserRegisteredProducer userRegisteredProducer) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.userRegisteredProducer = userRegisteredProducer;
     }
 
     public Optional<String> authenticate(LoginRequestDTO loginRequestDTO) {
         Optional<String> token = userService.findByEmail(loginRequestDTO.getEmail())
+                .filter(user -> user.getRole().matches(loginRequestDTO.getRole()))
                 .filter(user -> passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword()))
                 .map(user -> jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getName()));
 
@@ -63,7 +67,14 @@ public class AuthService {
         // 4. Save user
         userService.save(user);
 
-        // 5. Generate JWT token
+        // 5. Send the kafka event "userRegistered" so that Doctor and Patient DB both are in sync
+        userRegisteredProducer.sendUserRegisteredEvent(user.getId().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                null);
+
+        // 6. Generate JWT token
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getName());
 
         return Optional.of(token);
@@ -90,7 +101,14 @@ public class AuthService {
         // 4. Save
         userService.save(user);
 
-        // 5. Generate Token
+        // 5. Send the kafka event "userRegistered" so that Doctor and Patient DB both are in sync
+        userRegisteredProducer.sendUserRegisteredEvent(user.getId().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                null);
+
+        // 6. Generate Token
         return Optional.of(jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getName()));
     }
 }

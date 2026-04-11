@@ -1,0 +1,66 @@
+package com.pm.patientservice.kafka;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pm.patientservice.model.Patient;
+import com.pm.patientservice.repository.PatientRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+
+@Component
+public class UserRegisteredEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(UserRegisteredEventListener.class);
+
+    private final PatientRepository patientRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+
+    public UserRegisteredEventListener(PatientRepository patientRepository) {
+        this.patientRepository = patientRepository;
+    }
+
+    @KafkaListener(topics = "user-registered", groupId = "patient-group")
+    public void handleUserRegistered(String message) {
+        log.info("📨 Patient Service received user-registered event: {}", message);
+
+        try {
+
+            JsonNode json = objectMapper.readTree(message);
+            String role = json.get("role").asText();
+
+            // Check if it is a patient registrations as we want to process only patient registration here
+            if (!"PATIENT".equals(role)) {
+                log.info("⏭️ Skipping non-patient registration (role={})", role);
+                return;
+            }
+
+            String email = json.get("email").asText();
+            String name = json.get("name").asText();
+
+            // Idempotency check
+            if (patientRepository.existsByEmail(email)) {
+                log.info("⚠️ Patient with email {} already exists, skipping", email);
+                return;
+            }
+
+            Patient patient = new Patient();
+            patient.setName(name);
+            patient.setEmail(email);
+            patient.setAddress("Not provided");       // Default — patient updates later
+            patient.setDateofBirth(LocalDate.of(2000, 1, 1)); // Default placeholder
+            patient.setRegisteredDate(LocalDate.now());
+            // doctorEmail is left null — gets assigned when a doctor accepts an appointment
+
+            patientRepository.save(patient);
+            log.info("✅ Patient profile auto-created for: {} ({})", name, email);
+
+        } catch (Exception e) {
+            log.error("❌ Failed to process user-registered event: {}", e.getMessage(), e);
+        }
+    }
+}

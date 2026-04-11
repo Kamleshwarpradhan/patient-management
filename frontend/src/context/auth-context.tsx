@@ -57,8 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
     }, []);
 
-    const login = useCallback(async (email: string, password: string) => {
-        const response = await apiClient.login({ email, password });
+    const login = useCallback(async (email: string, password: string, role: string) => {
+        const response = await apiClient.login({ email, password, role });
         localStorage.setItem("auth_token", response.token);
         setToken(response.token);
         router.push("/dashboard");

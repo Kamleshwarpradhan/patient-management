@@ -10,9 +10,11 @@ import { AppointmentsTable } from "@/components/dashboard/appointments-table";
 import { PatientAppointmentsTable } from "@/components/dashboard/patient-appointments-table";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { latestToast } = useNotifications();
     const [patientCount, setPatientCount] = useState(0);
     const [doctorCount, setDoctorCount] = useState<number | undefined>(undefined);
 
@@ -38,7 +40,7 @@ export default function DashboardPage() {
                     setDoctorCount(0);
                 });
         }
-    }, [user]);
+    }, [user, latestToast]);
 
     if (user?.role === "PATIENT") {
         return (

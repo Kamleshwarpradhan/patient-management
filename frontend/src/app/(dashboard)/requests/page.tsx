@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Check, X, Loader2, CalendarClock } from "lucide-react";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export default function AppointmentRequestsPage() {
     const { user } = useAuth();
+    const { latestToast } = useNotifications();
     const [appointments, setAppointments] = useState<AppointmentModel[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function AppointmentRequestsPage() {
         } else {
             setIsLoading(false);
         }
-    }, [user]);
+    }, [user, latestToast]);
 
     const fetchPendingAppointments = async () => {
         try {

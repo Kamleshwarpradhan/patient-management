@@ -7,15 +7,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "auth-service", url = "${auth-service.url}")
-public interface AuthServiceClient {
+@FeignClient(name = "doctor-service", url = "${doctor-service.url}")
+public interface DoctorServiceClient {
 
-    // Calls GET http://localhost:8083/doctors
+    // Calls GET http://doctor-service:8086/doctors
     // Returns list of all doctors (role=USER)
     @GetMapping("/doctors")
     List<DoctorDTO> getAllDoctors();
 
-    // Calls GET http://localhost:8083/doctors/by-specialty?specialty=Cardiology
+    // Calls GET http://doctor-service:8086/doctors/by-specialty?specialty=Cardiology
     @GetMapping("/doctors/by-specialty")
     List<DoctorDTO> getDoctorsBySpecialty(@RequestParam("specialty") String specialty);
+
+    @GetMapping("/doctor")
+    DoctorDTO getDoctorByEmail(@RequestParam("email") String doctorEmail);
 }

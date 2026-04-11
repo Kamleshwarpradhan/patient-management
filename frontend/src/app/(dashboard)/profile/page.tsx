@@ -52,12 +52,26 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [profileData, setProfileData] = useState({
         specialization: "General Medicine",
-        phone: "+91 98765 43210",
+        phone: "+91 98765 43210", // Phone and clinic are placeholders as the backend only supports specialty for now
         clinicAddress: "123 Medical Street, City",
     });
     const [editData, setEditData] = useState(profileData);
 
     useEffect(() => {
+        // Fetch real specialization from backend
+        // This is necessary because JWT token context does not contain the 'specialty' field
+        apiClient.getCurrentUser().then((detailedUser) => {
+            const freshData = {
+                specialization: detailedUser.specialty || "General Medicine",
+                phone: "+91 98765 43210",
+                clinicAddress: "123 Medical Street, City",
+            };
+            setProfileData(freshData);
+            setEditData(freshData);
+        }).catch((err) => {
+            console.error("Failed to fetch fresh user data", err);
+        });
+
         if (user?.role === "USER" || user?.role === "ADMIN") {
             apiClient.getDoctorStats()
                 .then((data) => setPatientCount(data.totalPatients))

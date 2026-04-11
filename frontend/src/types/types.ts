@@ -20,6 +20,7 @@ export interface PatientRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+  role?: string;
 }
 
 export interface LoginResponse {
@@ -39,6 +40,7 @@ export interface Doctor {
   name: string;
   email: string;
   role: string;
+  specialty?: string;
 }
 
 // Dashboard types

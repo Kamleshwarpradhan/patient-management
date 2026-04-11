@@ -3,7 +3,7 @@ package com.pm.appointmentService.service;
 import com.pm.appointmentService.dto.AppointmentRequestDTO;
 import com.pm.appointmentService.dto.AppointmentResponseDTO;
 import com.pm.appointmentService.dto.DoctorDTO;
-import com.pm.appointmentService.feign.AuthServiceClient;
+import com.pm.appointmentService.feign.DoctorServiceClient;
 import com.pm.appointmentService.kafka.AppointmentEventProducer;
 import com.pm.appointmentService.model.Appointment;
 import com.pm.appointmentService.model.AppointmentStatus;
@@ -19,14 +19,14 @@ import java.util.UUID;
 public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final SymptomAnalyzerService symptomAnalyzer;
-    private final AuthServiceClient authServiceClient;
+    private final DoctorServiceClient doctorServiceClient;
     private final AppointmentEventProducer eventProducer;
 
     public AppointmentService(AppointmentRepository appointmentRepository, SymptomAnalyzerService symptomAnalyzer,
-            AuthServiceClient authServiceClient, AppointmentEventProducer eventProducer) {
+                              DoctorServiceClient doctorServiceClient, AppointmentEventProducer eventProducer) {
         this.appointmentRepository = appointmentRepository;
         this.symptomAnalyzer = symptomAnalyzer;
-        this.authServiceClient = authServiceClient;
+        this.doctorServiceClient = doctorServiceClient;
         this.eventProducer = eventProducer;
     }
 
@@ -35,14 +35,14 @@ public class AppointmentService {
         // 1. Analyze symptoms
         String specialty = symptomAnalyzer.analyzeSymptoms(request.getSymptoms());
         // 2. Find a doctor with that specialty (targeted query first)
-        List<DoctorDTO> matchingDoctors = authServiceClient.getDoctorsBySpecialty(specialty);
+        List<DoctorDTO> matchingDoctors = doctorServiceClient.getDoctorsBySpecialty(specialty);
         DoctorDTO matchedDoctor;
 
         if (!matchingDoctors.isEmpty()) {
             matchedDoctor = matchingDoctors.get(0);
         } else {
             // Fallback: assign to any available doctor
-            List<DoctorDTO> allDoctors = authServiceClient.getAllDoctors();
+            List<DoctorDTO> allDoctors = doctorServiceClient.getAllDoctors();
             matchedDoctor = allDoctors.isEmpty() ? null : allDoctors.get(0);
         }
 
@@ -91,6 +91,10 @@ public class AppointmentService {
                 doctorEmail, AppointmentStatus.PENDING);
     }
 
+    public List<Appointment> getAppointmentsForDoctor(String doctorEmail) {
+        return appointmentRepository.findByDoctorEmail(doctorEmail);
+    }
+
     public List<Appointment> getAppointmentsForPatient(String patientEmail) {
         return appointmentRepository.findByPatientEmail(patientEmail);
     }
@@ -110,6 +114,9 @@ public class AppointmentService {
         if (!appt.getDoctorEmail().equals(doctorEmail)) {
             throw new RuntimeException("Not your appointment");
         }
+
+        DoctorDTO doctorDTO = doctorServiceClient.getDoctorByEmail(doctorEmail);
+
         AppointmentStatus status = AppointmentStatus.valueOf(newStatus.toUpperCase());
         appt.setStatus(status);
         appointmentRepository.save(appt);
@@ -119,7 +126,7 @@ public class AppointmentService {
                     appt.getId().toString(),
                     appt.getPatientEmail(),
                     doctorEmail,
-                    "Doctor" // In real app, fetch doctor name
+                    doctorDTO.getName() // In real app, fetch doctor name
             );
         }
         return appt;

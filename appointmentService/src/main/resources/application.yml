@@ -9,5 +9,5 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-auth-service:
-  url: http://auth-service:8083
+doctor-service:
+  url: http://doctor-service:8086

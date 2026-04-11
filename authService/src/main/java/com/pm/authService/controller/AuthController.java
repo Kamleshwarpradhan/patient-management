@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 public class AuthController {
@@ -88,11 +89,24 @@ public class AuthController {
                         user.getId().toString(),
                         user.getName(),
                         user.getEmail(),
-                        user.getRole(),
-                        user.getSpecialty()))
+                        user.getRole()))
                 .toList();
 
         return ResponseEntity.ok().body(users);
+    }
+
+    @Operation(summary = "Delete user — ADMIN only")
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable String id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        
+        if (!"ADMIN".equals(userRole)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        userService.deleteUser(java.util.UUID.fromString(id));
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Get user count stats — ADMIN only")
@@ -106,56 +120,5 @@ public class AuthController {
 
         long doctorCount = userService.countDoctors();
         return ResponseEntity.ok().body(Map.of("doctors", doctorCount));
-    }
-
-    @Operation(summary = "Update user specialty — DOCTOR/ADMIN only")
-    @PutMapping("/user/{id}/specialty")
-    public ResponseEntity<Void> updateSpecialty(
-            @PathVariable String id,
-            @RequestBody Map<String, String> payload,
-            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
-        // Legacy method
-        String specialty = payload.get("specialty");
-        userService.updateSpecialty(java.util.UUID.fromString(id), specialty);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Update logged-in user's specialty")
-    @PutMapping("/user/specialty")
-    public ResponseEntity<Void> updateOwnSpecialty(
-            @RequestBody Map<String, String> payload,
-            @RequestHeader("X-User-Email") String email) {
-        String specialty = payload.get("specialty");
-        userService.updateSpecialtyByEmail(email, specialty);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "List all doctors — internal service-to-service")
-    @GetMapping("/doctors")
-    public ResponseEntity<List<UserResponseDTO>> getAllDoctors() {
-        List<UserResponseDTO> doctors = userService.findAllDoctors().stream()
-                .map(user -> new UserResponseDTO(
-                        user.getId().toString(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getRole(),
-                        user.getSpecialty()))
-                .toList();
-        return ResponseEntity.ok(doctors);
-    }
-
-    @Operation(summary = "Find doctors by specialty — internal service-to-service")
-    @GetMapping("/doctors/by-specialty")
-    public ResponseEntity<List<UserResponseDTO>> getDoctorsBySpecialty(
-            @RequestParam String specialty) {
-        List<UserResponseDTO> doctors = userService.findBySpecialty(specialty).stream()
-                .map(user -> new UserResponseDTO(
-                        user.getId().toString(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getRole(),
-                        user.getSpecialty()))
-                .toList();
-        return ResponseEntity.ok(doctors);
     }
 }

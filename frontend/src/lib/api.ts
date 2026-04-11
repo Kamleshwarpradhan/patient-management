@@ -77,18 +77,28 @@ class ApiClient {
 
     // User/Doctor endpoints
     async getDoctors(): Promise<Doctor[]> {
-        return this.request<Doctor[]>("/auth/users");
+        return this.request<Doctor[]>("/api/doctors");
     }
 
     async getDoctorCount(): Promise<{ doctors: number }> {
         return this.request<{ doctors: number }>("/auth/users/count");
     }
 
+    async deleteUser(id: string): Promise<void> {
+        return this.request<void>(`/auth/users/${id}`, {
+            method: "DELETE",
+        });
+    }
+
     async updateSpecialty(specialty: string): Promise<void> {
-        return this.request<void>("/auth/user/specialty", {
+        return this.request<void>("/api/doctor/me", {
             method: "PUT",
             body: JSON.stringify({ specialty }),
         });
+    }
+
+    async getCurrentUser(): Promise<Doctor> {
+        return this.request<Doctor>("/api/doctor/me");
     }
 
     // Patient endpoints
@@ -130,6 +140,10 @@ class ApiClient {
 
     async getPatientAppointments(): Promise<AppointmentModel[]> {
         return this.request<AppointmentModel[]>("/api/appointments/patient");
+    }
+
+    async getDoctorAppointments(): Promise<AppointmentModel[]> {
+        return this.request<AppointmentModel[]>("/api/appointments/doctor");
     }
 
     async getDoctorStats(): Promise<{ totalPatients: number }> {

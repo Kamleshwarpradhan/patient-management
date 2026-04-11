@@ -7,12 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HeartPulse, Loader2, Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { HeartPulse, Loader2, Mail, Lock, ArrowRight, CheckCircle2, UserRound, Stethoscope } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { AuthProvider } from "@/context/auth-context";
 import { Suspense } from "react";
 
 function LoginForm() {
+    const [role, setRole] = useState<"PATIENT" | "DOCTOR">("PATIENT");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -27,7 +28,7 @@ function LoginForm() {
         setIsLoading(true);
 
         try {
-            await login(email, password);
+            await login(email, password, role);
         } catch {
             setError("Invalid email or password. Please try again.");
         } finally {
@@ -47,14 +48,42 @@ function LoginForm() {
             <Card className="relative w-full max-w-[420px] border-border/30 shadow-2xl shadow-blue-500/5 backdrop-blur-sm">
                 <CardContent className="p-8">
                     {/* Logo */}
-                    <div className="mb-8 flex flex-col items-center">
+                    <div className="mb-6 flex flex-col items-center">
                         <Link href="/" className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
                             <HeartPulse className="h-7 w-7 text-white" />
                         </Link>
                         <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Sign in to Patient Management System
+                        <p className="mt-1 text-sm text-center text-muted-foreground">
+                            Sign in to PatientHub as a {role === "PATIENT" ? "Patient" : "Doctor"}
                         </p>
+                    </div>
+
+                    {/* Role Toggle */}
+                    <div className="flex p-1 mb-6 bg-muted/50 rounded-xl border border-border/50">
+                        <button
+                            type="button"
+                            onClick={() => setRole("PATIENT")}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                                role === "PATIENT" 
+                                    ? "bg-white text-blue-600 shadow-sm dark:bg-background dark:text-blue-400" 
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <UserRound className="h-4 w-4" />
+                            Patient
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setRole("DOCTOR")}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                                role === "DOCTOR" 
+                                    ? "bg-white text-blue-600 shadow-sm dark:bg-background dark:text-blue-400" 
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Stethoscope className="h-4 w-4" />
+                            Doctor
+                        </button>
                     </div>
 
                     {/* Registration success */}
@@ -83,7 +112,7 @@ function LoginForm() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="doctor@clinic.com"
+                                    placeholder={role === "PATIENT" ? "patient@example.com" : "doctor@clinic.com"}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required

@@ -45,6 +45,18 @@ public class AppointmentController {
     }
     
     /**
+     * Doctor views all their appointments.
+     * Headers: X-User-Email (forwarded by Gateway)
+     */
+    @GetMapping("/doctor")
+    public ResponseEntity<List<Appointment>> getDoctorAppointments(
+            @RequestHeader("X-User-Email") String doctorEmail) {
+        return ResponseEntity.ok(
+                appointmentService.getAppointmentsForDoctor(doctorEmail));
+    }
+
+
+    /**
      * Patient views their own appointments.
      * Headers: X-User-Email (forwarded by Gateway)
      */

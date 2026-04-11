@@ -24,7 +24,15 @@ spring:
             - id: auth-users-route
               uri: http://auth-service:8083
               predicates:
-                - Path=/auth/users,/auth/users/**
+                - Path=/auth/users,/auth/users/**,/auth/user/**
+              filters:
+                - StripPrefix=1
+                - JwtValidation
+
+            - id: doctor-service-route
+              uri: http://doctor-service:8086
+              predicates:
+                - Path=/api/doctors/**,/api/doctor/**
               filters:
                 - StripPrefix=1
                 - JwtValidation
@@ -62,6 +70,14 @@ spring:
               uri: http://appointment-service:8084
               predicates:
                   - Path=/api/appointments/**
+              filters:
+                  - StripPrefix=1
+                  - JwtValidation
+
+            - id: notification-service-route
+              uri: http://notification-service:8085
+              predicates:
+                  - Path=/api/notifications/**
               filters:
                   - StripPrefix=1
                   - JwtValidation

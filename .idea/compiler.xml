@@ -12,6 +12,7 @@
         <module name="Integration-test" />
         <module name="notificationService" />
         <module name="analyticsservice" />
+        <module name="doctorService" />
         <module name="authService" />
         <module name="billingservice" />
       </profile>
@@ -36,6 +37,7 @@
       <module name="appointmentService" options="-parameters" />
       <module name="authService" options="-parameters" />
       <module name="billingservice" options="-parameters" />
+      <module name="doctorService" options="-parameters" />
       <module name="notificationService" options="-parameters" />
       <module name="patientservice" options="-parameters" />
     </option>

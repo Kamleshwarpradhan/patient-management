@@ -15,11 +15,14 @@ import {
     MapPin,
     Calendar,
     Users,
+    Stethoscope,
+    ActivitySquare,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
-import { Patient } from "@/types/types";
+import { Patient, AppointmentModel } from "@/types/types";
 import { PatientDialog } from "@/components/patients/patient-dialog";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 const avatarColors = [
     "bg-blue-500",
@@ -33,7 +36,9 @@ const avatarColors = [
 ];
 
 export default function PatientsPage() {
+    const { user } = useAuth();
     const [patients, setPatients] = useState<Patient[]>([]);
+    const [doctorAppointments, setDoctorAppointments] = useState<AppointmentModel[]>([]);
     const [search, setSearch] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -42,8 +47,30 @@ export default function PatientsPage() {
     const fetchPatients = async () => {
         try {
             setIsLoading(true);
-            const data = await apiClient.getPatients();
-            setPatients(data);
+            if (user?.role === "ADMIN") {
+                const data = await apiClient.getPatients();
+                setPatients(data);
+            } else if (user?.role === "USER") {
+                // Doctor views logic
+                const appts = await apiClient.getDoctorAppointments();
+                setDoctorAppointments(appts);
+                
+                // Construct pseudo-patient models from appointment data to fit the UI gracefully
+                const distinctPatients = new Map<string, Patient>();
+                appts.forEach(appt => {
+                    if (appt.status === "CONFIRMED" && !distinctPatients.has(appt.patientEmail)) {
+                        distinctPatients.set(appt.patientEmail, {
+                            id: appt.id,
+                            name: appt.patientEmail.split("@")[0].toUpperCase(),
+                            email: appt.patientEmail,
+                            address: "Digital Consultation",
+                            dateOfBirth: "Unknown (System User)"
+                        });
+                    }
+                });
+                
+                setPatients(Array.from(distinctPatients.values()));
+            }
         } catch {
             // API might not be available
         } finally {
@@ -52,8 +79,10 @@ export default function PatientsPage() {
     };
 
     useEffect(() => {
-        fetchPatients();
-    }, []);
+        if (user) {
+            fetchPatients();
+        }
+    }, [user]);
 
     const handleDelete = async (id: string) => {
         try {
@@ -90,18 +119,20 @@ export default function PatientsPage() {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Patients</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">{user?.role === "ADMIN" ? "Global Patient Records" : "My Verified Patients"}</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Manage your patients and their information
+                        {user?.role === "ADMIN" ? "Manage global unmapped patient registries" : "View your assigned and scheduled patients in one place"}
                     </p>
                 </div>
-                <Button
-                    onClick={handleAdd}
-                    className="gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
-                >
-                    <Plus className="h-4 w-4" />
-                    Add Patient
-                </Button>
+                {user?.role === "ADMIN" && (
+                    <Button
+                        onClick={handleAdd}
+                        className="gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Add Patient
+                    </Button>
+                )}
             </div>
 
             {/* Search & Stats */}
@@ -151,13 +182,13 @@ export default function PatientsPage() {
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-4">
                             <Users className="h-7 w-7 text-muted-foreground" />
                         </div>
-                        <p className="text-lg font-medium mb-1">No patients found</p>
+                        <p className="text-lg font-medium mb-1">{user?.role === "USER" ? "No Confirmed Patients Yet" : "No patients found"}</p>
                         <p className="text-sm text-muted-foreground mb-4">
                             {search
                                 ? "Try adjusting your search terms"
-                                : "Get started by adding your first patient"}
+                                : user?.role === "USER" ? "Accept an appointment request to see your patient details here." : "Get started by adding your first patient"}
                         </p>
-                        {!search && (
+                        {!search && user?.role === "ADMIN" && (
                             <Button onClick={handleAdd} variant="outline" className="gap-2">
                                 <Plus className="h-4 w-4" />
                                 Add Patient
@@ -201,22 +232,35 @@ export default function PatientsPage() {
 
                                     {/* Actions */}
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                                            onClick={() => handleEdit(patient)}
-                                        >
-                                            <Pencil className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                                            onClick={() => handleDelete(patient.id)}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
+                                        {user?.role === "ADMIN" && (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleEdit(patient)}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                                                    onClick={() => handleDelete(patient.id)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </>
+                                        )}
+                                        {user?.role === "USER" && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
+                                            >
+                                                <ActivitySquare className="h-3.5 w-3.5" />
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
 

@@ -3,18 +3,23 @@ package com.pm.notificationService.listner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pm.notificationService.dto.AppointmentEvent;
 import com.pm.notificationService.services.EmailService;
+import com.pm.notificationService.service.SseNotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
 @Component
 public class AppointmentEventListener {
     private static final Logger log = LoggerFactory.getLogger(
             AppointmentEventListener.class);
     private final EmailService emailService;
+    private final SseNotificationService sseNotificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    public AppointmentEventListener(EmailService emailService) {
+
+    public AppointmentEventListener(EmailService emailService, SseNotificationService sseNotificationService) {
         this.emailService = emailService;
+        this.sseNotificationService = sseNotificationService;
     }
     @KafkaListener(topics = "appointment-events", groupId = "notification-group")
     public void handleEvent(String message) {
@@ -49,6 +54,12 @@ public class AppointmentEventListener {
                 event.getAppointmentId()
         );
         emailService.sendEmail(event.getDoctorEmail(), subject, body);
+
+        // Send Real-time SSE Notification
+        String ssePayload = String.format(
+                "{\"type\": \"NEW_REQUEST\", \"title\": \"New Request\", \"message\": \"New appointment request from %s for %s.\"}",
+                event.getPatientEmail(), event.getSpecialty());
+        sseNotificationService.sendNotification(event.getDoctorEmail(), ssePayload);
     }
     private void notifyPatient(AppointmentEvent event) {
         String subject = "Appointment Confirmed!";
@@ -64,5 +75,11 @@ public class AppointmentEventListener {
                 event.getAppointmentId()
         );
         emailService.sendEmail(event.getPatientEmail(), subject, body);
+
+        // Send Real-time SSE Notification
+        String ssePayload = String.format(
+                "{\"type\": \"STATUS_UPDATE\", \"title\": \"Appointment Confirmed\", \"message\": \"Your appointment with %s has been confirmed!\"}",
+                event.getDoctorName());
+        sseNotificationService.sendNotification(event.getPatientEmail(), ssePayload);
     }
 }

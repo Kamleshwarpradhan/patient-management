@@ -11,6 +11,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 
@@ -30,24 +31,40 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
         return (exchange, chain) -> {
             String token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+            // Fallback to query parameter for EventSource (SSE) which doesn't support custom headers
+            if (token == null || !token.startsWith("Bearer ")) {
+                String queryToken = exchange.getRequest().getQueryParams().getFirst("token");
+                if (queryToken != null && !queryToken.isEmpty()) {
+                    token = "Bearer " + queryToken;
+                }
+            }
+
             if (token == null || !token.startsWith("Bearer ")) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
+            // Must be effectively final for lambda
+            final String finalToken = token;
+
             return webClient.get()
                     .uri("/validate")
-                    .header(HttpHeaders.AUTHORIZATION, token)
+                    .header(HttpHeaders.AUTHORIZATION, finalToken)
                     .retrieve()
                     .toBodilessEntity()
+                    .onErrorMap(e -> new RuntimeException("Validation Failed", e))
                     .flatMap(response -> {
                         // JWT is validated — decode claims and forward as headers
-                        ServerWebExchange mutatedExchange = addUserHeaders(exchange, token);
+                        ServerWebExchange mutatedExchange = addUserHeaders(exchange, finalToken);
                         return chain.filter(mutatedExchange);
                     })
                     .onErrorResume(e -> {
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return exchange.getResponse().setComplete();
+                        if (e.getMessage() != null && e.getMessage().contains("Validation Failed")) {
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                            return exchange.getResponse().setComplete();
+                        }
+                        // Otherwise, it’s a downstream error, let it bubble up
+                        return org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler.class.isAssignableFrom(e.getClass()) ? Mono.error(e) : Mono.error(e);
                     });
         };
     }

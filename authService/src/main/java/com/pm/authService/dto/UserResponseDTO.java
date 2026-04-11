@@ -5,17 +5,15 @@ public class UserResponseDTO {
     private String name;
     private String email;
     private String role;
-    private String specialty;
 
     public UserResponseDTO() {
     }
 
-    public UserResponseDTO(String id, String name, String email, String role, String specialty) {
+    public UserResponseDTO(String id, String name, String email, String role) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
-        this.specialty = specialty;
     }
 
     public String getId() {
@@ -48,13 +46,5 @@ public class UserResponseDTO {
 
     public void setRole(String role) {
         this.role = role;
-    }
-
-    public String getSpecialty() {
-        return specialty;
-    }
-
-    public void setSpecialty(String specialty) {
-        this.specialty = specialty;
     }
 }
