@@ -17,9 +17,9 @@ import {
     Save,
     X,
     Stethoscope,
-    Phone,
     MapPin,
     Loader2,
+    CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api";
@@ -50,44 +50,71 @@ export default function ProfilePage() {
     const [patientCount, setPatientCount] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [profileData, setProfileData] = useState({
+
+    // Doctor profile state
+    const [doctorData, setDoctorData] = useState({
         specialization: "General Medicine",
-        phone: "+91 98765 43210", // Phone and clinic are placeholders as the backend only supports specialty for now
         clinicAddress: "123 Medical Street, City",
     });
-    const [editData, setEditData] = useState(profileData);
+    const [editDoctorData, setEditDoctorData] = useState(doctorData);
+
+    // Patient profile state
+    const [patientData, setPatientData] = useState({
+        address: "",
+        dateOfBirth: "",
+        registeredDate: "",
+    });
+    const [editPatientData, setEditPatientData] = useState(patientData);
+
+    const isDoctor = user?.role === "DOCTOR" || user?.role === "ADMIN";
+    const isPatient = user?.role === "PATIENT";
 
     useEffect(() => {
-        // Fetch real specialization from backend
-        // This is necessary because JWT token context does not contain the 'specialty' field
-        apiClient.getCurrentUser().then((detailedUser) => {
-            const freshData = {
-                specialization: detailedUser.specialty || "General Medicine",
-                phone: "+91 98765 43210",
-                clinicAddress: "123 Medical Street, City",
-            };
-            setProfileData(freshData);
-            setEditData(freshData);
-        }).catch((err) => {
-            console.error("Failed to fetch fresh user data", err);
-        });
+        if (isDoctor) {
+            // Fetch doctor profile
+            apiClient.getCurrentUser().then((detailedUser) => {
+                const freshData = {
+                    specialization: detailedUser.specialty || "General Medicine",
+                    clinicAddress: "123 Medical Street, City",
+                };
+                setDoctorData(freshData);
+                setEditDoctorData(freshData);
+            }).catch((err) => {
+                console.error("Failed to fetch doctor data", err);
+            });
 
-        if (user?.role === "USER" || user?.role === "ADMIN") {
             apiClient.getDoctorStats()
                 .then((data) => setPatientCount(data.totalPatients))
                 .catch(() => { });
         }
-    }, [user?.role]);
+
+        if (isPatient) {
+            // Fetch patient profile
+            apiClient.getPatientProfile().then((patient) => {
+                const freshData = {
+                    address: patient.address || "Not provided",
+                    dateOfBirth: patient.dateOfBirth || "",
+                    registeredDate: patient.registeredDate || "",
+                };
+                setPatientData(freshData);
+                setEditPatientData(freshData);
+            }).catch((err) => {
+                console.error("Failed to fetch patient data", err);
+            });
+        }
+    }, [isDoctor, isPatient]);
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Wait for DB save, if user is doctor saving specialty
-            if (user?.role === "USER" || user?.role === "ADMIN") {
-                 await apiClient.updateSpecialty(editData.specialization);
-                 // Note: we can't update phone/address natively right now as backend only has specialty
+            if (isDoctor) {
+                await apiClient.updateSpecialty(editDoctorData.specialization);
+                setDoctorData(editDoctorData);
             }
-            setProfileData(editData);
+            if (isPatient) {
+                await apiClient.updatePatientAddress(editPatientData.address);
+                setPatientData({ ...patientData, address: editPatientData.address });
+            }
             setIsEditing(false);
         } catch (error) {
             console.error("Failed to save profile", error);
@@ -98,12 +125,13 @@ export default function ProfilePage() {
     };
 
     const handleCancel = () => {
-        setEditData(profileData);
+        setEditDoctorData(doctorData);
+        setEditPatientData(patientData);
         setIsEditing(false);
     };
 
-    const displayName = user ? getDisplayName(user.name, user.email) : "Doctor";
-    const initials = user ? getInitials(user.name, user.email) : "DR";
+    const displayName = user ? getDisplayName(user.name, user.email) : "User";
+    const initials = user ? getInitials(user.name, user.email) : "U";
 
     return (
         <div className="space-y-6 max-w-4xl">
@@ -111,14 +139,17 @@ export default function ProfilePage() {
             <div>
                 <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                    Manage your account and clinic information
+                    {isDoctor ? "Manage your account and clinic information" : "Manage your personal information"}
                 </p>
             </div>
 
             {/* Profile Card */}
             <Card className="border-border/40 shadow-sm overflow-hidden">
                 {/* Gradient Header */}
-                <div className="h-32 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 relative">
+                <div className={`h-32 relative ${isPatient
+                    ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600"
+                    : "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"
+                }`}>
                     <div className="absolute inset-0 opacity-20">
                         <div className="absolute top-0 right-1/4 h-32 w-32 rounded-full bg-white blur-2xl" />
                         <div className="absolute bottom-0 left-1/4 h-24 w-24 rounded-full bg-white blur-2xl" />
@@ -130,7 +161,10 @@ export default function ProfilePage() {
                     <div className="flex items-end justify-between -mt-12 mb-6">
                         <div className="flex items-end gap-4">
                             <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
-                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-2xl font-bold text-white">
+                                <AvatarFallback className={`text-2xl font-bold text-white ${isPatient
+                                    ? "bg-gradient-to-br from-emerald-500 to-teal-600"
+                                    : "bg-gradient-to-br from-blue-500 to-indigo-600"
+                                }`}>
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
@@ -139,7 +173,10 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-2 mt-1">
                                     <Badge
                                         variant="outline"
-                                        className="rounded-lg border-blue-200 bg-blue-50 text-blue-700 text-xs"
+                                        className={`rounded-lg text-xs ${isPatient
+                                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                            : "border-blue-200 bg-blue-50 text-blue-700"
+                                        }`}
                                     >
                                         <Shield className="h-3 w-3 mr-1" />
                                         {user?.role || "DOCTOR"}
@@ -188,7 +225,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Stats (Doctors Only) */}
-                    {user?.role !== "PATIENT" && (
+                    {isDoctor && (
                         <div className="grid grid-cols-3 gap-4 mb-8">
                             {[
                                 {
@@ -232,10 +269,10 @@ export default function ProfilePage() {
                     {/* Info Fields */}
                     <div className="space-y-5">
                         <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                            Contact Information
+                            {isPatient ? "Personal Information" : "Contact Information"}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Email - read only */}
+                            {/* Email - always read only */}
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium flex items-center gap-2">
                                     <Mail className="h-3.5 w-3.5 text-muted-foreground" />
@@ -248,56 +285,88 @@ export default function ProfilePage() {
                                 />
                             </div>
 
-                            {/* Specialization (Doctors Only) */}
-                            {user?.role !== "PATIENT" && (
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium flex items-center gap-2">
-                                        <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
-                                        Specialization
-                                    </Label>
-                                    <Input
-                                        value={isEditing ? editData.specialization : profileData.specialization}
-                                        onChange={(e) =>
-                                            setEditData({ ...editData, specialization: e.target.value })
-                                        }
-                                        readOnly={!isEditing}
-                                        className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
-                                    />
-                                </div>
+                            {/* === DOCTOR-SPECIFIC FIELDS === */}
+                            {isDoctor && (
+                                <>
+                                    {/* Specialization */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Specialization
+                                        </Label>
+                                        <Input
+                                            value={isEditing ? editDoctorData.specialization : doctorData.specialization}
+                                            onChange={(e) =>
+                                                setEditDoctorData({ ...editDoctorData, specialization: e.target.value })
+                                            }
+                                            readOnly={!isEditing}
+                                            className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
+                                        />
+                                    </div>
+
+                                    {/* Clinic Address */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Clinic Address
+                                        </Label>
+                                        <Input
+                                            value={isEditing ? editDoctorData.clinicAddress : doctorData.clinicAddress}
+                                            onChange={(e) =>
+                                                setEditDoctorData({ ...editDoctorData, clinicAddress: e.target.value })
+                                            }
+                                            readOnly={!isEditing}
+                                            className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
+                                        />
+                                    </div>
+                                </>
                             )}
 
-                            {/* Phone */}
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium flex items-center gap-2">
-                                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                    Phone
-                                </Label>
-                                <Input
-                                    value={isEditing ? editData.phone : profileData.phone}
-                                    onChange={(e) =>
-                                        setEditData({ ...editData, phone: e.target.value })
-                                    }
-                                    readOnly={!isEditing}
-                                    className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
-                                />
-                            </div>
-                            
-                            {/* Clinic Address (Doctors Only) */}
-                            {user?.role !== "PATIENT" && (
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium flex items-center gap-2">
-                                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                                        Clinic Address
-                                    </Label>
-                                    <Input
-                                        value={isEditing ? editData.clinicAddress : profileData.clinicAddress}
-                                        onChange={(e) =>
-                                            setEditData({ ...editData, clinicAddress: e.target.value })
-                                        }
-                                        readOnly={!isEditing}
-                                        className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
-                                    />
-                                </div>
+                            {/* === PATIENT-SPECIFIC FIELDS === */}
+                            {isPatient && (
+                                <>
+                                    {/* Date of Birth - read only */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Date of Birth
+                                        </Label>
+                                        <Input
+                                            value={patientData.dateOfBirth || "Not provided"}
+                                            readOnly
+                                            className="rounded-xl bg-muted/50 cursor-not-allowed"
+                                        />
+                                    </div>
+
+                                    {/* Address - editable */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Address
+                                        </Label>
+                                        <Input
+                                            value={isEditing ? editPatientData.address : patientData.address}
+                                            onChange={(e) =>
+                                                setEditPatientData({ ...editPatientData, address: e.target.value })
+                                            }
+                                            readOnly={!isEditing}
+                                            className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
+                                        />
+                                    </div>
+
+                                    {/* Registered Date - read only */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Registered Date
+                                        </Label>
+                                        <Input
+                                            value={patientData.registeredDate || "Not available"}
+                                            readOnly
+                                            className="rounded-xl bg-muted/50 cursor-not-allowed"
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

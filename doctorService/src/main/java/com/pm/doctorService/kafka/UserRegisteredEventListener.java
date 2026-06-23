@@ -31,7 +31,7 @@ public class UserRegisteredEventListener {
             String role = json.get("role").asText();
 
             // Check whether it is a doctor registrations (role = USER) as we want to process only doctors registration here
-            if (!"USER".equals(role)) {
+            if (!"DOCTOR".equals(role)) {
                 log.info("⏭️ Skipping non-doctor registration (role={})", role);
                 return;
             }

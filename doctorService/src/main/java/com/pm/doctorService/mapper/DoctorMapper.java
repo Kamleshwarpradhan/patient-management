@@ -10,7 +10,7 @@ public class DoctorMapper {
                 doctor.getId().toString(),
                 doctor.getName(),
                 doctor.getEmail(),
-                "USER",
+                "DOCTOR",
                 doctor.getSpecialty(),
                 doctor.getExperienceYears(),
                 doctor.getClinicAddress()

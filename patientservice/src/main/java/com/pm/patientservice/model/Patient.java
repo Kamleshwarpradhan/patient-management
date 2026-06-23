@@ -1,5 +1,6 @@
 package com.pm.patientservice.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -25,6 +26,7 @@ public class Patient {
     private String address;
 
     @Column(name = "date_of_birth", nullable = false)
+    @JsonProperty("dateOfBirth")
     private LocalDate dateofBirth;
 
     @Column(name = "registered_date", nullable = false)

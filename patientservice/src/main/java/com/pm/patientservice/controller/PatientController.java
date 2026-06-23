@@ -3,6 +3,8 @@ package com.pm.patientservice.controller;
 import com.pm.patientservice.dto.PatientRequestDTO;
 import com.pm.patientservice.dto.PatientResponseDTO;
 import com.pm.patientservice.dto.Validator.CreatePatientValidatorGroups;
+import com.pm.patientservice.model.Patient;
+import com.pm.patientservice.repository.PatientRepository;
 import com.pm.patientservice.services.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,9 +23,34 @@ import java.util.UUID;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PatientRepository patientRepository;
 
-    public PatientController(PatientService patientService) {
+    public PatientController(PatientService patientService, PatientRepository patientRepository) {
         this.patientService = patientService;
+        this.patientRepository = patientRepository;
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current patient's own profile")
+    public ResponseEntity<Patient> getMyProfile(@RequestHeader("X-User-Email") String email) {
+        return patientRepository.findByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Update current patient's address (DOB is read-only)")
+    public ResponseEntity<Patient> updateMyProfile(
+            @RequestHeader("X-User-Email") String email,
+            @RequestBody Map<String, String> payload) {
+        return patientRepository.findByEmail(email)
+                .map(patient -> {
+                    if (payload.containsKey("address")) {
+                        patient.setAddress(payload.get("address"));
+                    }
+                    return ResponseEntity.ok(patientRepository.save(patient));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping

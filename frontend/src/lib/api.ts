@@ -126,6 +126,17 @@ class ApiClient {
         });
     }
 
+    async getPatientProfile(): Promise<Patient> {
+        return this.request<Patient>("/api/patient/me");
+    }
+
+    async updatePatientAddress(address: string): Promise<Patient> {
+        return this.request<Patient>("/api/patient/me", {
+            method: "PUT",
+            body: JSON.stringify({ address }),
+        });
+    }
+
     // Appointment endpoints
     async bookAppointment(data: AppointmentRequestDTO): Promise<AppointmentResponseDTO> {
         return this.request<AppointmentResponseDTO>("/api/appointments/book", {

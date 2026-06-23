@@ -48,11 +48,17 @@ public class UserRegisteredEventListener {
                 return;
             }
 
+            String address = json.has("address") && !json.get("address").asText().isEmpty()
+                        ? json.get("address").asText() : "Not provided";
+
+            LocalDate dob = json.has("dateOfBirth") && !json.get("dateOfBirth").asText().isEmpty()
+                       ? LocalDate.parse(json.get("dateOfBirth").asText()) : LocalDate.of(2000, 1, 1);
+
             Patient patient = new Patient();
             patient.setName(name);
             patient.setEmail(email);
-            patient.setAddress("Not provided");       // Default — patient updates later
-            patient.setDateofBirth(LocalDate.of(2000, 1, 1)); // Default placeholder
+            patient.setAddress(address);       // Default — patient updates later
+            patient.setDateofBirth(dob); // Default placeholder
             patient.setRegisteredDate(LocalDate.now());
             // doctorEmail is left null — gets assigned when a doctor accepts an appointment
 

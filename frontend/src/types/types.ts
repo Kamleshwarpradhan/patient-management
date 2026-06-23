@@ -5,6 +5,7 @@ export interface Patient {
   email: string;
   address: string;
   dateOfBirth: string;
+  registeredDate?: string;
   doctorEmail?: string;
 }
 
@@ -32,6 +33,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
+  address?: string;
+  dateOfBirth?: string;
 }
 
 // Doctor/User types for admin

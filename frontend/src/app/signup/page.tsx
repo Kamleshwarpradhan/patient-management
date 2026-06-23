@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HeartPulse, Loader2, Mail, Lock, ArrowRight, User, Stethoscope, UserRound } from "lucide-react";
+import { HeartPulse, Loader2, Mail, Lock, ArrowRight, User, Stethoscope, UserRound, MapPin, Calendar } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
 export default function SignupPage() {
@@ -16,6 +16,8 @@ export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [address, setAddress] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -27,7 +29,7 @@ export default function SignupPage() {
         setIsLoading(true);
         try {
             if (role === "PATIENT") {
-                await apiClient.registerPatient({ name, email, password, confirmPassword });
+                await apiClient.registerPatient({ name, email, password, confirmPassword, address, dateOfBirth });
             } else {
                 await apiClient.register({ name, email, password, confirmPassword });
             }
@@ -133,6 +135,46 @@ export default function SignupPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Patient-only fields */}
+                        {role === "PATIENT" && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dateOfBirth" className="text-sm font-medium">
+                                        Date of Birth
+                                    </Label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            id="dateOfBirth"
+                                            type="date"
+                                            value={dateOfBirth}
+                                            onChange={(e) => setDateOfBirth(e.target.value)}
+                                            required
+                                            className="rounded-xl pl-9 h-11"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="address" className="text-sm font-medium">
+                                        Address
+                                    </Label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            id="address"
+                                            type="text"
+                                            placeholder="123 Main Street, City"
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            required
+                                            className="rounded-xl pl-9 h-11"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="password" className="text-sm font-medium">

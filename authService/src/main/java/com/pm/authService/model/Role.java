@@ -1,7 +1,7 @@
 package com.pm.authService.model;
 
 public enum Role {
-    USER,
+    DOCTOR,
     ADMIN,
     PATIENT
 }

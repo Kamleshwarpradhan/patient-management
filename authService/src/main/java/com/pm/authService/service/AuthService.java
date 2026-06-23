@@ -28,8 +28,12 @@ public class AuthService {
 
     public Optional<String> authenticate(LoginRequestDTO loginRequestDTO) {
         Optional<String> token = userService.findByEmail(loginRequestDTO.getEmail())
-                .filter(user -> user.getRole().matches(loginRequestDTO.getRole()))
                 .filter(user -> passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword()))
+                .filter(user -> {
+                    String requestedRole = loginRequestDTO.getRole();
+                    if (requestedRole == null) return true; // backward compat
+                    return user.getRole().equals(requestedRole);
+                })
                 .map(user -> jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getName()));
 
         return token;
@@ -62,7 +66,7 @@ public class AuthService {
         user.setName(signupRequestDTO.getName());
         user.setEmail(signupRequestDTO.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
-        user.setRole(Role.USER); // default role for doctors/staff
+        user.setRole(Role.DOCTOR); // default role for doctors/staff
 
         // 4. Save user
         userService.save(user);
@@ -72,6 +76,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getName(),
                 user.getRole(),
+                null,
+                null,
                 null);
 
         // 6. Generate JWT token
@@ -106,7 +112,9 @@ public class AuthService {
                 user.getEmail(),
                 user.getName(),
                 user.getRole(),
-                null);
+                null,
+                signupRequestDTO.getDateofBirth(),
+                signupRequestDTO.getAddress());
 
         // 6. Generate Token
         return Optional.of(jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getName()));

@@ -35,6 +35,6 @@ public class UserService {
     }
 
     public long countDoctors() {
-        return userRepository.countByRole(Role.USER);
+        return userRepository.countByRole(Role.DOCTOR);
     }
 }
