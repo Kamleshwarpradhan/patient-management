@@ -37,14 +37,12 @@ export function Sidebar() {
 
         if (role === "PATIENT") {
             items.push({ icon: PlusCircle, label: "Book Appointment", href: "/book" });
-        } else if (role === "USER") { // DOCTOR
+        } else if (role === "USER" || role === "DOCTOR") { // DOCTOR
             items.push({ icon: Inbox, label: "Requests", href: "/requests" });
             items.push({ icon: Users, label: "Patients", href: "/patients" });
-            items.push({ icon: CalendarDays, label: "Appointments", href: "#" });
         } else if (role === "ADMIN") {
-            items.push({ icon: Users, label: "Patients", href: "/patients" });
-            items.push({ icon: CalendarDays, label: "Appointments", href: "#" });
-            items.push({ icon: FileText, label: "Reports", href: "#" });
+            items.push({ icon: Users, label: "Admin", href: "/admin" });
+            items.push({ icon: Inbox, label: "Requests", href: "/requests" });
         }
 
         return items;

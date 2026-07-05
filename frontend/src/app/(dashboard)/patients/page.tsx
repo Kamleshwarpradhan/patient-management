@@ -50,7 +50,7 @@ export default function PatientsPage() {
             if (user?.role === "ADMIN") {
                 const data = await apiClient.getPatients();
                 setPatients(data);
-            } else if (user?.role === "USER") {
+            } else if (user?.role === "USER" || user?.role === "DOCTOR") {
                 // Doctor views logic
                 const appts = await apiClient.getDoctorAppointments();
                 setDoctorAppointments(appts);
@@ -182,11 +182,11 @@ export default function PatientsPage() {
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-4">
                             <Users className="h-7 w-7 text-muted-foreground" />
                         </div>
-                        <p className="text-lg font-medium mb-1">{user?.role === "USER" ? "No Confirmed Patients Yet" : "No patients found"}</p>
+                        <p className="text-lg font-medium mb-1">{(user?.role === "USER" || user?.role === "DOCTOR") ? "No Confirmed Patients Yet" : "No patients found"}</p>
                         <p className="text-sm text-muted-foreground mb-4">
                             {search
                                 ? "Try adjusting your search terms"
-                                : user?.role === "USER" ? "Accept an appointment request to see your patient details here." : "Get started by adding your first patient"}
+                                : (user?.role === "USER" || user?.role === "DOCTOR") ? "Accept an appointment request to see your patient details here." : "Get started by adding your first patient"}
                         </p>
                         {!search && user?.role === "ADMIN" && (
                             <Button onClick={handleAdd} variant="outline" className="gap-2">
@@ -252,7 +252,7 @@ export default function PatientsPage() {
                                                 </Button>
                                             </>
                                         )}
-                                        {user?.role === "USER" && (
+                                        {(user?.role === "USER" || user?.role === "DOCTOR") && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

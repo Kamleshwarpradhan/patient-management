@@ -66,6 +66,7 @@ public class AuthService {
         user.setName(signupRequestDTO.getName());
         user.setEmail(signupRequestDTO.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
+        // TODO: Revisit this logic as doctor/patient both can use signup method
         user.setRole(Role.DOCTOR); // default role for doctors/staff
 
         // 4. Save user

@@ -19,7 +19,7 @@ export default function DashboardPage() {
     const [doctorCount, setDoctorCount] = useState<number | undefined>(undefined);
 
     useEffect(() => {
-        if (user?.role === "USER") {
+        if (user?.role === "USER" || user?.role === "DOCTOR") {
             apiClient.getDoctorStats()
                 .then((data) => setPatientCount(data.totalPatients))
                 .catch(() => { });

@@ -11,3 +11,6 @@ spring:
 
 server:
   port: 8083
+
+jwt:
+  secret: dGhpcy1pcy1hLXNlY3VyZS1qd3Qtc2VjcmV0LWtleS1mb3ItcGF0aWVudC1tYW5hZ2VtZW50LXN5c3RlbQ==

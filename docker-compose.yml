@@ -1,0 +1,337 @@
+# =============================================================================
+# Patient Management System — Docker Compose
+# =============================================================================
+# Usage:
+#   docker compose up -d            → Start everything
+#   docker compose up -d --build    → Rebuild & start
+#   docker compose logs -f          → Follow all logs
+#   docker compose down -v          → Stop & remove volumes (clean slate)
+# =============================================================================
+
+services:
+
+  # ─────────────────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────────────────────
+
+  # PostgreSQL — Auth Service Database
+  auth-db:
+    image: postgres:16-alpine
+    container_name: pm-auth-db
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pm_user -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  # PostgreSQL — Patient Service Database
+  patient-db:
+    image: postgres:16-alpine
+    container_name: pm-patient-db
+    environment:
+      POSTGRES_DB: patient_db
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_secret
+    ports:
+      - "5434:5432"
+    volumes:
+      - patient-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pm_user -d patient_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  # PostgreSQL — Doctor Service Database
+  doctor-db:
+    image: postgres:16-alpine
+    container_name: pm-doctor-db
+    environment:
+      POSTGRES_DB: doctor_db
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_secret
+    ports:
+      - "5435:5432"
+    volumes:
+      - doctor-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pm_user -d doctor_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  # PostgreSQL — Appointment Service Database
+  appointment-db:
+    image: postgres:16-alpine
+    container_name: pm-appointment-db
+    environment:
+      POSTGRES_DB: appointment_db
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_secret
+    ports:
+      - "5436:5432"
+    volumes:
+      - appointment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pm_user -d appointment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  # Apache Kafka (KRaft mode — no Zookeeper needed)
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: pm-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pm-network
+
+  # ─────────────────────────────────────────────────────────
+  # BACKEND MICROSERVICES
+  # ─────────────────────────────────────────────────────────
+
+  # Auth Service (Port 8083)
+  auth-service:
+    build:
+      context: ./authService
+      dockerfile: Dockerfile
+    container_name: pm-auth-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: pm_user
+      SPRING_DATASOURCE_PASSWORD: pm_secret
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # JWT secret — base64-encoded 256-bit key (change in production!)
+      JWT_SECRET: dGhpcy1pcy1hLXNlY3VyZS1qd3Qtc2VjcmV0LWtleS1mb3ItcGF0aWVudC1tYW5hZ2VtZW50LXN5c3RlbQ==
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pm-network
+
+  # Billing Service (Port 9001 gRPC, Port 8081 HTTP)
+  billing-service:
+    build:
+      context: ./billingservice
+      dockerfile: Dockerfile
+    container_name: pm-billing-service
+    ports:
+      - "8081:8081"
+      - "9001:9001"
+    networks:
+      - pm-network
+
+  # Patient Service (Port 8080)
+  patient-service:
+    build:
+      context: ./patientservice
+      dockerfile: Dockerfile
+    container_name: pm-patient-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/patient_db
+      SPRING_DATASOURCE_USERNAME: pm_user
+      SPRING_DATASOURCE_PASSWORD: pm_secret
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      BILLING_SERVICE_ADDRESS: billing-service
+      BILLING_SERVICE_GRPC_PORT: 9001
+    depends_on:
+      patient-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      billing-service:
+        condition: service_started
+    networks:
+      - pm-network
+
+  # Doctor Service (Port 8086)
+  doctor-service:
+    build:
+      context: ./doctorService
+      dockerfile: Dockerfile
+    container_name: pm-doctor-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://doctor-db:5432/doctor_db
+      SPRING_DATASOURCE_USERNAME: pm_user
+      SPRING_DATASOURCE_PASSWORD: pm_secret
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      doctor-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pm-network
+
+  # Appointment Service (Port 8084)
+  appointment-service:
+    build:
+      context: ./appointmentService
+      dockerfile: Dockerfile
+    container_name: pm-appointment-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://appointment-db:5432/appointment_db
+      SPRING_DATASOURCE_USERNAME: pm_user
+      SPRING_DATASOURCE_PASSWORD: pm_secret
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DOCTOR_SERVICE_URL: http://doctor-service:8086
+    depends_on:
+      appointment-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      doctor-service:
+        condition: service_started
+    networks:
+      - pm-network
+
+  # Notification Service (Port 8085)
+  notification-service:
+    build:
+      context: ./notificationService
+      dockerfile: Dockerfile
+    container_name: pm-notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # Email config — override with real credentials if you want emails
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-your-email@gmail.com}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-your-app-password}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - pm-network
+
+  # Analytics Service (Port 8082)
+  analytics-service:
+    build:
+      context: ./analyticsservice
+      dockerfile: Dockerfile
+    container_name: pm-analytics-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - pm-network
+
+  # API Gateway (Port 8088)
+  api-gateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
+    container_name: pm-api-gateway
+    ports:
+      - "8088:8088"
+    environment:
+      # Service URLs for route definitions
+      AUTH_SERVICE_URL: http://auth-service:8083
+    depends_on:
+      auth-service:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      doctor-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - pm-network
+
+  # ─────────────────────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pm-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8088
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - pm-network
+
+# ─────────────────────────────────────────────────────────
+# VOLUMES
+# ─────────────────────────────────────────────────────────
+volumes:
+  auth-db-data:
+  patient-db-data:
+  doctor-db-data:
+  appointment-db-data:
+
+# ─────────────────────────────────────────────────────────
+# NETWORK
+# ─────────────────────────────────────────────────────────
+networks:
+  pm-network:
+    driver: bridge
