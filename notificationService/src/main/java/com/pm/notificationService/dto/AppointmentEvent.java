@@ -1,5 +1,8 @@
 package com.pm.notificationService.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AppointmentEvent {
     private String event;            // "APPOINTMENT_CREATED" or "APPOINTMENT_CONFIRMED"
     private String appointmentId;

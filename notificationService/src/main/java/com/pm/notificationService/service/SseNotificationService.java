@@ -24,6 +24,15 @@ public class SseNotificationService {
         emitter.onTimeout(() -> removeEmitter(email, emitter));
         emitter.onError(e -> removeEmitter(email, emitter));
 
+        // Send an initial dummy event to establish connection and flush headers
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("init")
+                    .data("connected"));
+        } catch (IOException e) {
+            removeEmitter(email, emitter);
+        }
+
         return emitter;
     }
 

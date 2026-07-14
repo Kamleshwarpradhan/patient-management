@@ -85,3 +85,11 @@ spring:
               filters:
                   - StripPrefix=1
                   - JwtValidation
+
+            - id: billing-service-route
+              uri: http://billing-service:8081
+              predicates:
+                - Path=/api/billing/**
+              filters:
+                - StripPrefix=1
+                - JwtValidation

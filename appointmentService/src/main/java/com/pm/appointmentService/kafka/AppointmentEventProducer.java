@@ -3,6 +3,8 @@ package com.pm.appointmentService.kafka;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class AppointmentEventProducer {
     private static final String TOPIC = "appointment-events";
@@ -26,11 +28,12 @@ public class AppointmentEventProducer {
         kafkaTemplate.send(TOPIC, message);
     }
     public void sendAppointmentConfirmed(String appointmentId, String patientEmail,
-                                         String doctorEmail, String doctorName) {
+                                         String doctorEmail, String doctorName, BigDecimal consultationFee) {
         String message = String.format(
                 "{\"event\":\"APPOINTMENT_CONFIRMED\",\"appointmentId\":\"%s\"," +
-                        "\"patientEmail\":\"%s\",\"doctorEmail\":\"%s\",\"doctorName\":\"%s\"}",
-                appointmentId, patientEmail, doctorEmail, doctorName
+                        "\"patientEmail\":\"%s\",\"doctorEmail\":\"%s\",\"doctorName\":\"%s\"," +
+                        "\"consultationFee\":%s}",
+                appointmentId, patientEmail, doctorEmail, doctorName, consultationFee
         );
         kafkaTemplate.send(TOPIC, message);
     }

@@ -32,11 +32,12 @@ public class DoctorService {
         return doctorRepository.findByEmail(email).map(DoctorMapper::mapDoctorToDoctorResponseDTO);
     }
 
-    public Optional<DoctorResponseDTO> updateDoctorProfile(String email,String specialty,Integer experienceYears,String clinicAddress){
+    public Optional<DoctorResponseDTO> updateDoctorProfile(String email,String specialty,Integer experienceYears,String clinicAddress, java.math.BigDecimal consultationFee){
         return doctorRepository.findByEmail(email).map(doctor -> {
             if (specialty != null) doctor.setSpecialty(specialty);
             if (experienceYears != null) doctor.setExperienceYears(experienceYears);
             if (clinicAddress != null) doctor.setClinicAddress(clinicAddress);
+            if (consultationFee != null) doctor.setConsultationFee(consultationFee);
             doctorRepository.save(doctor);
             return DoctorMapper.mapDoctorToDoctorResponseDTO(doctor);
         });

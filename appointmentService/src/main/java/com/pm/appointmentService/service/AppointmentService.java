@@ -126,7 +126,8 @@ public class AppointmentService {
                     appt.getId().toString(),
                     appt.getPatientEmail(),
                     doctorEmail,
-                    doctorDTO.getName() // In real app, fetch doctor name
+                    doctorDTO.getName(),
+                    doctorDTO.getConsultationFee()
             );
         }
         return appt;

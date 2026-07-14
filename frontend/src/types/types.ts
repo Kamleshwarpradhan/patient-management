@@ -44,6 +44,8 @@ export interface Doctor {
   email: string;
   role: string;
   specialty?: string;
+  clinicAddress?: string;
+  consultationFee?: number;
 }
 
 // Dashboard types
@@ -103,4 +105,30 @@ export interface AppointmentModel {
   appointmentTime?: string;
   status: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELED";
   createdAt: string;
+}
+
+export interface BillingAccount {
+  accountId: string;
+  patientId: string;
+  name: string;
+  email: string;
+  balance: number;
+  createdAt: string;
+}
+
+export interface Invoice {
+  invoiceId: string;
+  appointmentId: string;
+  doctorName: string;
+  amount: number;
+  status: "PENDING" | "PAID" | "CANCELLED";
+  createdAt: string;
+  paidAt?: string;
+}
+
+export interface PaymentResponse {
+  success: boolean;
+  transactionId?: string;
+  message: string;
+  invoice?: Invoice;
 }

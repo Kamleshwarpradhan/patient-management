@@ -13,7 +13,8 @@ public class DoctorMapper {
                 "DOCTOR",
                 doctor.getSpecialty(),
                 doctor.getExperienceYears(),
-                doctor.getClinicAddress()
+                doctor.getClinicAddress(),
+                doctor.getConsultationFee() != null ? doctor.getConsultationFee() : java.math.BigDecimal.valueOf(500)
         );
     }
 }

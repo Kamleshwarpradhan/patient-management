@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pm.patientservice.model.Patient;
 import com.pm.patientservice.repository.PatientRepository;
+import com.pm.patientservice.grpc.BillingServiceGrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -17,11 +18,13 @@ public class UserRegisteredEventListener {
     private static final Logger log = LoggerFactory.getLogger(UserRegisteredEventListener.class);
 
     private final PatientRepository patientRepository;
+    private final BillingServiceGrpcClient billingServiceGrpcClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
 
-    public UserRegisteredEventListener(PatientRepository patientRepository) {
+    public UserRegisteredEventListener(PatientRepository patientRepository, BillingServiceGrpcClient billingServiceGrpcClient) {
         this.patientRepository = patientRepository;
+        this.billingServiceGrpcClient = billingServiceGrpcClient;
     }
 
     @KafkaListener(topics = "user-registered", groupId = "patient-group")
@@ -62,8 +65,16 @@ public class UserRegisteredEventListener {
             patient.setRegisteredDate(LocalDate.now());
             // doctorEmail is left null — gets assigned when a doctor accepts an appointment
 
-            patientRepository.save(patient);
+            Patient savedPatient = patientRepository.save(patient);
             log.info("✅ Patient profile auto-created for: {} ({})", name, email);
+
+            try {
+                billingServiceGrpcClient.createBillingAccount(savedPatient.getId().toString(),
+                        savedPatient.getName(), savedPatient.getEmail());
+                log.info("✅ Billing account successfully created for patient ID: {}", savedPatient.getId());
+            } catch (Exception e) {
+                log.error("❌ Failed to create billing account via gRPC: {}", e.getMessage(), e);
+            }
 
         } catch (Exception e) {
             log.error("❌ Failed to process user-registered event: {}", e.getMessage(), e);

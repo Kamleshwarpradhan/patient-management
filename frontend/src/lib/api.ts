@@ -1,7 +1,8 @@
-import { 
-  Patient, PatientRequest, LoginRequest, LoginResponse, 
-  RegisterRequest, Doctor, AppointmentRequestDTO, 
-  AppointmentResponseDTO, AppointmentModel 
+import {
+    Patient, PatientRequest, LoginRequest, LoginResponse,
+    RegisterRequest, Doctor, AppointmentRequestDTO,
+    AppointmentResponseDTO, AppointmentModel, BillingAccount, Invoice,
+    PaymentResponse
 } from "@/types/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8088";
@@ -97,6 +98,13 @@ class ApiClient {
         });
     }
 
+    async updateDoctorProfile(data: { specialty?: string; clinicAddress?: string; consultationFee?: number }): Promise<void> {
+        return this.request<void>("/api/doctor/me", {
+            method: "PUT",
+            body: JSON.stringify(data),
+        });
+    }
+
     async getCurrentUser(): Promise<Doctor> {
         return this.request<Doctor>("/api/doctor/me");
     }
@@ -167,6 +175,24 @@ class ApiClient {
             body: JSON.stringify({ status }),
         });
     }
+
+    // fetch Billing Account Details
+    async getBillingAccount(): Promise<BillingAccount> {
+        return this.request<BillingAccount>("/api/billing/account");
+    }
+
+    async getInvoices(): Promise<Invoice[]> {
+        return this.request<Invoice[]>("/api/billing/invoices");
+    }
+
+    async payInvoice(invoiceId: string, paymentMethod: string = "SIMULATED"): Promise<PaymentResponse> {
+        return this.request<PaymentResponse>(`/api/billing/invoices/${invoiceId}/pay`, {
+            method: "PUT",
+            body: JSON.stringify({ paymentMethod }),
+        });
+    }
+
+
 }
 
 export const apiClient = new ApiClient();

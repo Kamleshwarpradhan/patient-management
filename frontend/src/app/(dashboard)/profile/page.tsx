@@ -20,9 +20,12 @@ import {
     MapPin,
     Loader2,
     CalendarDays,
+    CreditCard,
+    IndianRupee,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api";
+import { BillingAccount } from "@/types/types";
 
 function getInitials(name: string, email: string): string {
     if (name) {
@@ -55,6 +58,7 @@ export default function ProfilePage() {
     const [doctorData, setDoctorData] = useState({
         specialization: "General Medicine",
         clinicAddress: "123 Medical Street, City",
+        consultationFee: 500,
     });
     const [editDoctorData, setEditDoctorData] = useState(doctorData);
 
@@ -66,7 +70,10 @@ export default function ProfilePage() {
     });
     const [editPatientData, setEditPatientData] = useState(patientData);
 
-    const isDoctor = user?.role === "DOCTOR" || user?.role === "ADMIN";
+    // Billing account state
+    const [billingAccount, setBillingAccount] = useState<BillingAccount | null>(null);
+
+    const isDoctor = user?.role === "DOCTOR" || user?.role === "ADMIN" || user?.role === "USER";
     const isPatient = user?.role === "PATIENT";
 
     useEffect(() => {
@@ -75,7 +82,8 @@ export default function ProfilePage() {
             apiClient.getCurrentUser().then((detailedUser) => {
                 const freshData = {
                     specialization: detailedUser.specialty || "General Medicine",
-                    clinicAddress: "123 Medical Street, City",
+                    clinicAddress: detailedUser.clinicAddress || "123 Medical Street, City",
+                    consultationFee: detailedUser.consultationFee || 500,
                 };
                 setDoctorData(freshData);
                 setEditDoctorData(freshData);
@@ -101,6 +109,13 @@ export default function ProfilePage() {
             }).catch((err) => {
                 console.error("Failed to fetch patient data", err);
             });
+
+            // Fetch billing account
+            apiClient.getBillingAccount().then((account) => {
+                setBillingAccount(account);
+            }).catch((err) => {
+                console.error("Failed to fetch billing data", err);
+            });
         }
     }, [isDoctor, isPatient]);
 
@@ -108,7 +123,11 @@ export default function ProfilePage() {
         setIsSaving(true);
         try {
             if (isDoctor) {
-                await apiClient.updateSpecialty(editDoctorData.specialization);
+                await apiClient.updateDoctorProfile({
+                    specialty: editDoctorData.specialization,
+                    clinicAddress: editDoctorData.clinicAddress,
+                    consultationFee: Number(editDoctorData.consultationFee),
+                });
                 setDoctorData(editDoctorData);
             }
             if (isPatient) {
@@ -319,6 +338,23 @@ export default function ProfilePage() {
                                             className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
                                         />
                                     </div>
+
+                                    {/* Consultation Fee */}
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-medium flex items-center gap-2">
+                                            <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
+                                            Consultation Fee (₹)
+                                        </Label>
+                                        <Input
+                                            type="number"
+                                            value={isEditing ? editDoctorData.consultationFee : doctorData.consultationFee}
+                                            onChange={(e) =>
+                                                setEditDoctorData({ ...editDoctorData, consultationFee: Number(e.target.value) })
+                                            }
+                                            readOnly={!isEditing}
+                                            className={`rounded-xl ${!isEditing ? "bg-muted/50 cursor-not-allowed" : ""}`}
+                                        />
+                                    </div>
                                 </>
                             )}
 
@@ -372,6 +408,47 @@ export default function ProfilePage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Billing Account Card (Patients Only) */}
+            {isPatient && billingAccount && (
+                <Card className="border-border/40 shadow-sm">
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                                Billing Account
+                            </h4>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="rounded-xl border border-border/40 p-4 text-center">
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+                                    <IndianRupee className="h-5 w-5 text-emerald-500" />
+                                </div>
+                                <div className="text-xl font-bold">
+                                    ₹{billingAccount.balance?.toFixed(2) ?? "0.00"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Balance</div>
+                            </div>
+                            <div className="rounded-xl border border-border/40 p-4 text-center">
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                                    <CreditCard className="h-5 w-5 text-blue-500" />
+                                </div>
+                                <div className="text-sm font-mono font-bold">
+                                    {billingAccount.accountId?.slice(0, 8)}...
+                                </div>
+                                <div className="text-xs text-muted-foreground">Account ID</div>
+                            </div>
+                            <div className="rounded-xl border border-border/40 p-4 text-center">
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+                                    <Calendar className="h-5 w-5 text-purple-500" />
+                                </div>
+                                <div className="text-sm font-bold">{billingAccount.createdAt}</div>
+                                <div className="text-xs text-muted-foreground">Created</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

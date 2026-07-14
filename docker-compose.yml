@@ -94,6 +94,26 @@ services:
     networks:
       - pm-network
 
+  # PostgreSQL — Billing Service Database
+  billing-db:
+    image: postgres:16-alpine
+    container_name: pm-billing-db
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_secret
+    ports:
+      - "5437:5432"
+    volumes:
+      - billing-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U pm_user -d billing_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
   # Apache Kafka (KRaft mode — no Zookeeper needed)
   kafka:
     image: apache/kafka:3.9.0
@@ -160,6 +180,16 @@ services:
     ports:
       - "8081:8081"
       - "9001:9001"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://billing-db:5432/billing_db
+      SPRING_DATASOURCE_USERNAME: pm_user
+      SPRING_DATASOURCE_PASSWORD: pm_secret
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+        billing-db:
+          condition: service_healthy
+        kafka:
+          condition: service_healthy
     networks:
       - pm-network
 
@@ -328,6 +358,7 @@ volumes:
   patient-db-data:
   doctor-db-data:
   appointment-db-data:
+  billing-db-data:
 
 # ─────────────────────────────────────────────────────────
 # NETWORK

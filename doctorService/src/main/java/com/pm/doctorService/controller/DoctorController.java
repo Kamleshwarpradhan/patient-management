@@ -59,8 +59,16 @@ public class DoctorController {
                 ? ((Number) payload.get("experienceYears")).intValue() : null;
         String clinicAddress = payload.get("clinicAddress") != null
                 ? payload.get("clinicAddress").toString() : null;
+        java.math.BigDecimal consultationFee = null;
+        if (payload.get("consultationFee") != null) {
+            try {
+                consultationFee = new java.math.BigDecimal(payload.get("consultationFee").toString());
+            } catch (Exception e) {
+                // Ignore parsing issues
+            }
+        }
 
-        return doctorService.updateDoctorProfile(email, specialty, experience, clinicAddress)
+        return doctorService.updateDoctorProfile(email, specialty, experience, clinicAddress, consultationFee)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

@@ -15,6 +15,7 @@ import {
     UserCircle,
     PlusCircle,
     Inbox,
+    CreditCard,
 } from "lucide-react";
 import {
     Tooltip,
@@ -37,6 +38,7 @@ export function Sidebar() {
 
         if (role === "PATIENT") {
             items.push({ icon: PlusCircle, label: "Book Appointment", href: "/book" });
+            items.push({ icon: CreditCard, label: "Billing", href: "/billing" });
         } else if (role === "USER" || role === "DOCTOR") { // DOCTOR
             items.push({ icon: Inbox, label: "Requests", href: "/requests" });
             items.push({ icon: Users, label: "Patients", href: "/patients" });

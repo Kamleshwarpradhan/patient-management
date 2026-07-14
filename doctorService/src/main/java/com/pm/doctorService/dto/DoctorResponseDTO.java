@@ -1,5 +1,7 @@
 package com.pm.doctorService.dto;
 
+import java.math.BigDecimal;
+
 public class DoctorResponseDTO {
     private String id;
     private String name;
@@ -8,11 +10,13 @@ public class DoctorResponseDTO {
     private String specialty;
     private Integer experienceYears;
     private String clinicAddress;
+    private BigDecimal consultationFee;
 
     public DoctorResponseDTO() {}
 
     public DoctorResponseDTO(String id, String name, String email, String role,
-                             String specialty, Integer experienceYears, String clinicAddress) {
+                             String specialty, Integer experienceYears, String clinicAddress,
+                             BigDecimal consultationFee) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -20,6 +24,7 @@ public class DoctorResponseDTO {
         this.specialty = specialty;
         this.experienceYears = experienceYears;
         this.clinicAddress = clinicAddress;
+        this.consultationFee = consultationFee;
     }
     // Getters and Setters
     public String getId() {
@@ -76,5 +81,13 @@ public class DoctorResponseDTO {
 
     public void setClinicAddress(String clinicAddress) {
         this.clinicAddress = clinicAddress;
+    }
+
+    public BigDecimal getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(BigDecimal consultationFee) {
+        this.consultationFee = consultationFee;
     }
 }

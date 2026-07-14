@@ -32,7 +32,7 @@ public class Doctor {
     private String clinicAddress;
 
     @Column(name = "consultation_fee")
-    private BigDecimal consultationFee;
+    private BigDecimal consultationFee = BigDecimal.valueOf(500);
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

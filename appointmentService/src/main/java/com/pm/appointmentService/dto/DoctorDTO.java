@@ -1,11 +1,22 @@
 package com.pm.appointmentService.dto;
 
+import java.math.BigDecimal;
+
 public class DoctorDTO {
     private String id;
     private String name;
     private String email;
     private String role;
     private String specialty;
+    private BigDecimal consultationFee;
+
+    public BigDecimal getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(BigDecimal consultationFee) {
+        this.consultationFee = consultationFee;
+    }
 
     public String getId() {
         return id;
