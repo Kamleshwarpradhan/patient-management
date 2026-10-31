@@ -78,15 +78,15 @@ graph TB
     end
 
     %% Client to Gateway
-    FE -->|HTTP / REST + Bearer Token| GW
+    FE -->|"HTTP / REST + Bearer Token"| GW
 
     %% Gateway Routing
-    GW -->|/auth/**| AS
-    GW -->|/api/patient/**| PS
-    GW -->|/api/doctors/**| DS
-    GW -->|/api/appointments/**| APS
-    GW -->|/api/notifications/**| NS
-    GW -->|/api/billing/**| BS
+    GW -->|"/auth/**"| AS
+    GW -->|"/api/patient/**"| PS
+    GW -->|"/api/doctors/**"| DS
+    GW -->|"/api/appointments/**"| APS
+    GW -->|"/api/notifications/**"| NS
+    GW -->|"/api/billing/**"| BS
 
     %% DB Connections
     AS --- ADB
@@ -96,15 +96,15 @@ graph TB
     BS --- BDB
 
     %% Inter-service & Event Communications
-    AS -.->|Publish: user-registered| KF
-    KF -.->|Consume: user-registered| PS
-    PS ==>|gRPC / HTTP-2 (Protobuf)| BS
-    APS ==>|OpenFeign REST Client| DS
-    APS -.->|Publish: appointment-events| KF
-    KF -.->|Consume: appointment-events| NS
-    PS -.->|Publish: patient events| KF
-    KF -.->|Consume: events| AN
-    NS -.->|Real-Time SSE Stream| FE
+    AS -.->|"Publish: user-registered"| KF
+    KF -.->|"Consume: user-registered"| PS
+    PS -->|"gRPC / HTTP-2 (Protobuf)"| BS
+    APS -->|"OpenFeign REST Client"| DS
+    APS -.->|"Publish: appointment-events"| KF
+    KF -.->|"Consume: appointment-events"| NS
+    PS -.->|"Publish: patient events"| KF
+    KF -.->|"Consume: events"| AN
+    NS -.->|"Real-Time SSE Stream"| FE
 
     classDef client fill:#3b82f6,stroke:#1d4ed8,color:#fff;
     classDef gateway fill:#8b5cf6,stroke:#6d28d9,color:#fff;
